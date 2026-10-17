@@ -24,10 +24,12 @@ namespace aweXpect.Xml;
 /// </remarks>
 internal static class XmlComparer
 {
+	private const char PathSeparator = '/';
+
 	public static XmlComparisonResult Compare(XElement actual, XElement expected)
 	{
 		XmlComparisonResult result = new();
-		string path = "/" + expected.Name.LocalName;
+		string path = PathSeparator + expected.Name.LocalName;
 		if (actual.Name.LocalName != expected.Name.LocalName)
 		{
 			result.AddError(path, $"was <{actual.Name.LocalName}> instead of <{expected.Name.LocalName}>");
@@ -63,7 +65,7 @@ internal static class XmlComparer
 		List<XAttribute> unpairedAttributes = actual.Attributes().Where(a => !a.IsNamespaceDeclaration).ToList();
 		foreach (XAttribute expectedAttribute in expected.Attributes().Where(a => !a.IsNamespaceDeclaration))
 		{
-			string attributePath = path + "/@" + expectedAttribute.Name.LocalName;
+			string attributePath = $"{path}{PathSeparator}@{expectedAttribute.Name.LocalName}";
 			XAttribute? actualAttribute =
 				unpairedAttributes.Find(a => a.Name == expectedAttribute.Name) ??
 				unpairedAttributes.Find(a => a.Name.LocalName == expectedAttribute.Name.LocalName);
@@ -88,7 +90,7 @@ internal static class XmlComparer
 
 		foreach (XAttribute unexpectedAttribute in unpairedAttributes)
 		{
-			result.AddError(path + "/@" + unexpectedAttribute.Name.LocalName, "was unexpected");
+			result.AddError($"{path}{PathSeparator}@{unexpectedAttribute.Name.LocalName}", "was unexpected");
 		}
 	}
 
@@ -220,7 +222,7 @@ internal static class XmlComparer
 		public int Position { get; } = position;
 		public string Key { get; } = $"{name}[{occurrence}]";
 		public string Segment { get; } = hasSiblingsOfSameName ? $"{name}[{occurrence}]" : name;
-		public string Path => parentPath + "/" + Segment;
+		public string Path => parentPath + PathSeparator + Segment;
 	}
 
 	internal sealed class XmlComparisonResult
