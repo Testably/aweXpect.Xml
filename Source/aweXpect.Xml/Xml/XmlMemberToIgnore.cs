@@ -1,5 +1,4 @@
 using System;
-using System.Globalization;
 using aweXpect.Formatting;
 using static aweXpect.Formatting.Format;
 
@@ -52,24 +51,23 @@ internal abstract class XmlMemberToIgnore
 		internal static string[] Split(string path)
 			=> path.Split([XmlComparer.PathSeparator,], StringSplitOptions.RemoveEmptyEntries);
 
+		/// <remarks>
+		///     The positions are compared as text, as a path omits the position of an element without siblings of the same
+		///     name, but never writes it with leading zeros.
+		/// </remarks>
 		private static bool Matches(string patternSegment, string pathSegment)
 		{
-			(string patternName, int? patternPosition) = Parse(patternSegment);
-			(string pathName, int? pathPosition) = Parse(pathSegment);
-			return patternName == pathName && (patternPosition is null || patternPosition == (pathPosition ?? 1));
+			(string patternName, string? patternPosition) = Parse(patternSegment);
+			(string pathName, string? pathPosition) = Parse(pathSegment);
+			return patternName == pathName && (patternPosition is null || patternPosition == (pathPosition ?? "1"));
 		}
 
-		private static (string Name, int? Position) Parse(string segment)
+		private static (string Name, string? Position) Parse(string segment)
 		{
 			int start = segment.LastIndexOf('[');
-			if (start > 0 && segment[segment.Length - 1] == ']' &&
-			    int.TryParse(segment.Substring(start + 1, segment.Length - start - 2), NumberStyles.None,
-				    CultureInfo.InvariantCulture, out int position))
-			{
-				return (segment.Substring(0, start), position);
-			}
-
-			return (segment, null);
+			return start > 0 && segment[segment.Length - 1] == ']'
+				? (segment.Substring(0, start), segment.Substring(start + 1, segment.Length - start - 2))
+				: (segment, null);
 		}
 	}
 
