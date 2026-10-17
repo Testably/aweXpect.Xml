@@ -95,6 +95,9 @@ XML options:
    "@createdat" matched no member (did you mean "@createdAt"?)
 ```
 
+As `Matches` does not compare the additional nodes of the subject, a member to ignore that only occurs in the subject
+matches no compared path either, and is named as well, although it is not needed.
+
 ## Element order
 
 By default, the order of the child elements and texts is significant. You can ignore it for all compared elements:
