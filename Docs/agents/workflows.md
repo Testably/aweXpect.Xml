@@ -5,15 +5,16 @@ All commands run from the repository root. `build.ps1` (Windows), `build.sh` (Li
 ## Build and test
 
 - `dotnet build aweXpect.Xml.slnx` builds the library, tests, AOT smoke tests and benchmarks. The pipeline project is excluded from the solution build. Building the library also packs it (`GeneratePackageOnBuild`).
-- `dotnet test Tests/aweXpect.Xml.Tests -f net10.0` runs the unit tests (xunit v2) for one framework. Use `-f net8.0` or, on Windows, `-f net48` for the others.
-- Filter by the nested test classes, e.g. `--filter "FullyQualifiedName~ThatXmlString+IsValidXml"` or `--filter "FullyQualifiedName~XmlOptions+IgnoringMember"`.
+- All test projects use TUnit and run on the Microsoft.Testing.Platform, which `global.json` selects for `dotnet test`, so the project is passed with `--project`. `dotnet test` without arguments runs the whole solution.
+- `dotnet test --project Tests/aweXpect.Xml.Tests -f net10.0` runs the unit tests for one framework. Use `-f net8.0` or, on Windows, `-f net48` for the others. `dotnet run --project Tests/aweXpect.Xml.Tests -f net10.0 -- <options>` starts the same executable.
+- Filter by the nested test classes with `--treenode-filter "/<assembly>/<namespace>/<class>/<test>"`, e.g. `--treenode-filter "/*/*/ThatXmlString+IsValidXml+*/*"` or `--treenode-filter "/*/*/XmlOptionsTests+IgnoringMember/*"`.
 - Add `--no-build` after a solution build to skip the rebuild.
-- Failure messages of `System.Xml` are localized on .NET Framework. Tests that assert such a message use `[UseEnglishMessages]` from `Tests/aweXpect.Xml.Tests/Helpers`.
+- Failure messages of `System.Xml` are localized on .NET Framework. Tests that assert such a message use `[UseEnglishMessages]` from `Tests/aweXpect.Xml.Tests/Helpers`, which runs them with TUnit's `[Culture("en-US")]`.
 
 ## Public API
 
-- `dotnet test Tests/aweXpect.Xml.Api.Tests` (NUnit, `net8.0`) reads the built `aweXpect.Xml.dll` of every target framework listed in `Source/Directory.Build.props` and compares its public API with `ApiApprovalTests.aweXpect%2EXml.<framework>.awexpect-snapshot.txt` via `aweXpect.Snapshots.PublicApi`. The project builds all target frameworks of the library itself.
-- A difference fails the test and writes a `*.awexpect-snapshot.pending.txt` next to the snapshot. Accept an intended change by renaming the pending file, running the `[Explicit]` test `AcceptApiChanges`, or running the tests with `AWEXPECT_ACCEPT_SNAPSHOTS=all`. Commit only the updated `*.awexpect-snapshot.txt` files.
+- `dotnet test --project Tests/aweXpect.Xml.Api.Tests` (TUnit, `net8.0`) reads the built `aweXpect.Xml.dll` of every target framework listed in `Source/Directory.Build.props` and compares its public API with `ApiApprovalTests.aweXpect%2EXml.<framework>.awexpect-snapshot.txt` via `aweXpect.Snapshots.PublicApi`. The project builds all target frameworks of the library itself.
+- A difference fails the test and writes a `*.awexpect-snapshot.pending.txt` next to the snapshot. Accept an intended change by renaming the pending file, running the `[Explicit]` test `AcceptApiChanges` on purpose (`dotnet test --project Tests/aweXpect.Xml.Api.Tests --treenode-filter "/*/*/ApiApprovalTests/AcceptApiChanges"`; TUnit runs an explicit test only when every test that the filter selects is explicit, so a normal run skips it), or running the tests with `AWEXPECT_ACCEPT_SNAPSHOTS=all`. Commit only the updated `*.awexpect-snapshot.txt` files.
 - The tests pick the `Debug` or `Release` output matching their own configuration, so build and test in the same configuration.
 
 ## AOT smoke tests
@@ -28,7 +29,7 @@ All commands run from the repository root. `build.ps1` (Windows), `build.sh` (Li
 
 ## Mutation tests
 
-- `./build.ps1 MutationTests` installs `dotnet-stryker` into `TestResults/` and mutates `Source/aweXpect.Xml` against `aweXpect.Xml.Tests` on `net10.0`. Outside `main` only code changed since `main` is mutated. Reports land in `Artifacts/Stryker`. This is slow; leave it to CI unless asked.
+- `./build.ps1 MutationTests` installs `dotnet-stryker` into `TestResults/dotnet-stryker` and mutates `Source/aweXpect.Xml` against `aweXpect.Xml.Tests` and `aweXpect.Xml.Api.Tests` on `net10.0`, with Stryker's runner for the Microsoft.Testing.Platform (`--test-runner mtp`). As the API tests target only `net8.0`, Stryker runs the unit tests. The Stryker version is the `PackageDownload` of `dotnet-stryker` in `Pipeline/Build.csproj`. Outside `main` only code changed since `main` is mutated. Reports land in `Artifacts/Stryker`. This is slow; leave it to CI unless asked.
 
 ## Documentation
 
@@ -44,15 +45,15 @@ The pipeline is a Fallout build (`Pipeline/Build.csproj`, configured in `.fallou
 | Target                                                  | Purpose                                                                                                        |
 |---------------------------------------------------------|----------------------------------------------------------------------------------------------------------------|
 | `Compile`                                               | Cleans `Artifacts/` and `TestResults/`, restores and builds the solution with the GitVersion version           |
-| `UnitTests`                                             | Runs `aweXpect.Xml.Tests` for `net8.0` and `net10.0` with coverage, and for `net48` with the xunit console on Windows |
-| `CodeCoverage`                                          | `UnitTests` plus an OpenCover report in `TestResults/reports`                                                   |
-| `ApiChecks`                                             | Runs `aweXpect.Xml.Api.Tests`                                                                                  |
+| `UnitTests`                                             | Runs `aweXpect.Xml.Tests` with `dotnet test` on every target framework (`net48` on Windows only), each writing `<project>_<framework>.trx` and `<project>_<framework>.cobertura.xml` to `TestResults` |
+| `CodeCoverage`                                          | `UnitTests` plus a SonarQube coverage report in `TestResults/reports`                                           |
+| `ApiChecks`                                             | Runs `aweXpect.Xml.Api.Tests` and writes `TestResults/aweXpect.Xml.Api.Tests.trx`                              |
 | `AotSmokeTests`                                         | Runs the AOT smoke tests under the JIT and published with Native AOT                                            |
 | `Benchmarks`                                            | Runs all benchmarks and logs the report to `Artifacts/Benchmarks`                                               |
 | `MutationTests`                                         | Runs Stryker and prepares the pull request comment                                                             |
 | `CodeAnalysis`                                          | SonarCloud analysis around `CodeCoverage`; needs `SONAR_TOKEN`                                                  |
 | `Pack`                                                  | Moves the `.nupkg` and `.snupkg` into `Artifacts/Packages`                                                      |
-| `BenchmarkComment`, `MutationTestDashboard`             | CI only: download the artifacts of a CI run and comment on the pull request or upload to the Stryker dashboard |
+| `BenchmarkComment`, `MutationTestsComment`, `MutationTestsDashboard` | CI only: download the artifacts of a CI run and comment on the pull request or upload to the Stryker dashboard |
 
 ## CI workflows
 
