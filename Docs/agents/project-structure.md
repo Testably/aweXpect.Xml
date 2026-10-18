@@ -5,8 +5,8 @@
 | Path                         | Content                                                                                       |
 |------------------------------|-----------------------------------------------------------------------------------------------|
 | `Source/aweXpect.Xml`        | The library and the only shipped package                                                      |
-| `Tests/aweXpect.Xml.Tests`   | Unit tests (xunit v2, `net8.0;net10.0;net48`)                                                 |
-| `Tests/aweXpect.Xml.Api.Tests` | Public API snapshots (NUnit, `net8.0`)                                                      |
+| `Tests/aweXpect.Xml.Tests`   | Unit tests (TUnit, `net8.0;net10.0;net48`)                                                    |
+| `Tests/aweXpect.Xml.Api.Tests` | Public API snapshots (TUnit, `net8.0`)                                                      |
 | `Tests/Aot/aweXpect.Xml.Aot` | Native AOT smoke tests as a console application (`net10.0`)                                   |
 | `Benchmarks/aweXpect.Xml.Benchmarks` | BenchmarkDotNet benchmarks                                                            |
 | `Pipeline`                   | Fallout build targets, started by `build.ps1`, `build.sh` and `build.cmd`                     |
@@ -44,14 +44,14 @@ Helpers in `Helpers/` (namespace `aweXpect.Helpers`):
 ## Tests
 
 - Test files mirror the expectation: `ThatXElement.HasAttribute.Tests.cs` contains `ThatXElement.HasAttribute.Tests` as nested classes in the namespace `aweXpect.Xml.Tests`. Options have their own files, e.g. `XmlOptions.IgnoringMember.Tests.cs`.
-- Test methods are named `When<Condition>_Should<Outcome>` and use the arrange, `async Task Act()`, assert pattern with `await That(Act).DoesNotThrow()` or `Throws<XunitException>().WithMessage(...)`.
-- `Usings.cs` provides global usings for xunit and aweXpect, including `using static aweXpect.Expect`.
+- Test methods are named `When<Condition>_Should<Outcome>` and use the arrange, `async Task Act()`, assert pattern with `await That(Act).DoesNotThrow()` or `Throws<FailException>().WithMessage(...)`; aweXpect throws its own `FailException` under TUnit.
+- `Usings.cs` provides global usings for aweXpect, including `using static aweXpect.Expect`; TUnit adds its own.
 - The AOT smoke checks in `Tests/Aot/aweXpect.Xml.Aot/Checks.cs` state for each expectation the passing result or the expected parts of the failure message, and run identically under the JIT and as a Native AOT binary.
 
 ## Build settings
 
 - `Directory.Build.props` (root): strong-name signing for all projects.
 - `Source/Directory.Build.props`: package metadata, target frameworks, warnings as errors, documentation file, symbol packages, trimming and AOT flags (`net8.0` and up; the older `net8.0` analyzers are disabled) and `Nullable`/`IsExternalInit` polyfill packages. On `netstandard2.0` nullable reference types are annotations only.
-- `Tests/Directory.Build.props`: test target frameworks, xunit, coverlet and the full `aweXpect` package; tests are not signed.
+- `Tests/Directory.Build.props`: test target frameworks, TUnit executables of the Microsoft.Testing.Platform with the TRX and code coverage extensions, and the full `aweXpect` package; tests are not signed.
 - `Tests/Aot/Directory.Build.props`: `PublishAot`, invariant globalization and trimmer and AOT warnings as errors.
 - `.editorconfig`: tabs, CRLF line endings, file-scoped namespaces, explicit types instead of `var`, braces always.

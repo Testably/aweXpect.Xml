@@ -23,8 +23,9 @@ Correctness is a must. The other goals are strong defaults and win in this order
 
 ## Validation
 
-- Run the tests for your change before pushing, e.g. `dotnet test Tests/aweXpect.Xml.Tests -f net10.0 --filter "FullyQualifiedName~ThatXElement+HasAttribute"`. Run `-f net48` too when you use a newer language feature.
-- Assert failures with `Throws<XunitException>().WithMessage(...)` on the full message, never a bare `Throws`. Explain non-obvious cases with `.Because(...)` instead of a comment.
+- All tests run on TUnit and the Microsoft.Testing.Platform, which `global.json` selects for `dotnet test`: pass the project with `--project` and filter with `--treenode-filter`.
+- Run the tests for your change before pushing, e.g. `dotnet test --project Tests/aweXpect.Xml.Tests -f net10.0 --treenode-filter "/*/*/ThatXElement+HasAttribute+*/*"`. Run `-f net48` too when you use a newer language feature.
+- Assert failures with `Throws<FailException>().WithMessage(...)` on the full message, never a bare `Throws`. Explain non-obvious cases with `.Because(...)` instead of a comment.
 - A public API change fails `Tests/aweXpect.Xml.Api.Tests`. Review the `*.awexpect-snapshot.pending.txt` files it writes, then accept them (rename, run the explicit `AcceptApiChanges` test, or set `AWEXPECT_ACCEPT_SNAPSHOTS=all`) and commit the `*.awexpect-snapshot.txt` files, never the pending ones.
 - When an expectation changes, extend the AOT smoke checks in `Tests/Aot/aweXpect.Xml.Aot/Checks.cs` and run `./build.ps1 AotSmokeTests`.
 - Never run `./build.ps1` without a target: the defaults include benchmarks and the SonarCloud analysis.
