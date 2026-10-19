@@ -23,7 +23,7 @@ Public expectations are extension methods in the namespace `aweXpect`, so that t
 | `ThatXmlString.*.cs`                   | `string`    | `IsValidXml` (with `.Which(...)` on the root element), `IsValidXmlMatching`, `IsValidXmlMatchingExactly` |
 | `XmlExtensions.cs`                     | `string`    | `AsXml()` on `IsEqualTo(...)`, implemented as a string match type |
 | `ThatXElement.*.cs`                    | `XElement`  | `Matches`, `MatchesExactly`, `HasAttribute`, `DoesNotHaveAttribute`, `HasElement`, `DoesNotHaveElement` |
-| `ThatXDocument.*.cs`                   | `XDocument` | `Matches`, `MatchesExactly` on the root element                  |
+| `ThatXDocument.*.cs`                   | `XDocument` | The same expectations as `ThatXElement`, on the root element     |
 | `Results/XmlWhichResult.cs`            | `string`    | The result of `IsValidXml` that offers `Which`                   |
 
 The comparison lives in `Xml/` (namespace `aweXpect.Xml`):
@@ -31,7 +31,7 @@ The comparison lives in `Xml/` (namespace `aweXpect.Xml`):
 - `XmlComparer` compares two elements by content: names by namespace and local name, attributes in any order, comments and processing instructions ignored, text and CDATA as one text. Differences are reported by path, e.g. `/order/item[2]/@price`. Child elements are paired by local name and position, and their order is checked separately unless it is ignored.
 - `MatchesXmlConstraint<TNode>` backs `Matches` and `MatchesExactly`; `IsValidXmlMatching*` are shortcuts for `IsValidXml().Which(root => root.Matches...(...))`. The expected XML is parsed once when the expectation is specified, so an invalid expected value throws an `ArgumentException` for every subject.
 - `XmlMatchType` is the `IStringMatchType` behind `AsXml()`.
-- `HasNodeConstraint<TNode>` backs `HasAttribute` and `HasElement` and stores the found node, so that nested expectations only run when it exists.
+- `HasNodeConstraint<TSubject, TNode>` backs `HasAttribute` and `HasElement` and stores the found node, so that nested expectations only run when it exists. Like `MatchesXmlConstraint<TNode>`, it selects the element of the subject, e.g. the root element of a document, which fails both ways when it is missing.
 - `XmlOptions` is immutable; each method in `XmlOptionsExtensions` (`IgnoringElementOrder`, `IgnoringMember`, `Ignoring`) returns a copy. A new option must be copied in the internal copy constructor and listed in the "XML options" failure context.
 - `XmlMemberToIgnore` and `MembersToIgnoreTracker` decide which paths are ignored and name the members to ignore that matched nothing, with the path that was probably meant.
 

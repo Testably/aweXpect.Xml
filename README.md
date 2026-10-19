@@ -38,10 +38,10 @@ but it could not be parsed: Unexpected end of file has occurred. The following e
 | [`IsValidXmlMatchingExactly`](Docs/pages/01-strings.md#validation)                | `string`                | is valid XML that matches the expected XML exactly            |
 | [`Matches`](Docs/pages/02-matching.md#elements-and-documents)                     | `XElement`, `XDocument` | contains the expected XML, ignoring additional nodes          |
 | [`MatchesExactly`](Docs/pages/02-matching.md#elements-and-documents)              | `XElement`, `XDocument` | is equivalent to the expected XML                             |
-| [`HasAttribute`](Docs/pages/03-navigation.md#attributes)                          | `XElement`              | has the attribute, optionally whose value satisfies …         |
-| [`DoesNotHaveAttribute`](Docs/pages/03-navigation.md#attributes)                  | `XElement`              | does not have the attribute                                   |
-| [`HasElement`](Docs/pages/03-navigation.md#child-elements)                        | `XElement`              | has the child element, optionally which satisfies …           |
-| [`DoesNotHaveElement`](Docs/pages/03-navigation.md#child-elements)                | `XElement`              | does not have the child element                               |
+| [`HasAttribute`](Docs/pages/03-navigation.md#attributes)                          | `XElement`, `XDocument` | has the attribute, optionally whose value satisfies …         |
+| [`DoesNotHaveAttribute`](Docs/pages/03-navigation.md#attributes)                  | `XElement`, `XDocument` | does not have the attribute                                   |
+| [`HasElement`](Docs/pages/03-navigation.md#child-elements)                        | `XElement`, `XDocument` | has the child element, optionally which satisfies …           |
+| [`DoesNotHaveElement`](Docs/pages/03-navigation.md#child-elements)                | `XElement`, `XDocument` | does not have the child element                               |
 
 ## Documentation
 
